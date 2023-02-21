@@ -42,7 +42,7 @@ xhost local:root
 #docker restart glass-isc-dhcp
 
 
-docker-compose -f /home/boris/Desktop/AllNet/docker-compose.yml $COMMAND &
+docker-compose -f $HOME/boriscycle/AllNet/docker-compose.yml $COMMAND &
 sleep 3
 
 #############################################
