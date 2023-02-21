@@ -1,0 +1,5 @@
+# Build commands for the docker images
+
+docker build . -t allnet_deepspeech:devel -f dockerfiles/Dockerfile_deepspeech
+docker build . -t allnet_clip:devel -f dockerfiles/Dockerfile_clip
+

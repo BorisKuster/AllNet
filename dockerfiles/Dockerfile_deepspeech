@@ -1,0 +1,174 @@
+
+# use ubuntu 20.04 because we want to use ROS noetic
+ARG TARGET="gpu"
+#FROM nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04 as gpu
+FROM nvidia/cuda:10.1-devel-ubuntu18.04 as gpu
+
+# FROM ros:noetic
+LABEL maintainer "Boris Kuster <boris.kuster@ijs.si>"
+
+SHELL ["/bin/bash","-c"]
+
+################################################################
+## BEGIN: ros:core
+################################################################
+
+# setup timezone
+RUN echo 'Etc/UTC' > /etc/timezone && \
+    ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
+    apt-get update && \
+    apt-get install -q -y --no-install-recommends tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+# install packages
+RUN apt update && apt install -q -y --no-install-recommends \
+    dirmngr \
+    gnupg2 \
+    curl \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# setup keys
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+
+# setup sources.list
+RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros1-latest.list
+
+# setup environment
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+ENV ROS_DISTRO noetic
+
+
+ENV LD_LIBRARY_PATH=/usr/local/cuda-10.1/compat/:$LD_LIBRARY_PATH
+
+################################################################
+## END: ros:core
+## BEGIN: python3
+################################################################
+
+RUN apt update && apt install --no-install-recommends -y \
+    software-properties-common \
+    build-essential
+RUN add-apt-repository universe
+
+RUN apt update --fix-missing && apt install -y wget bzip2 ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev \
+    libglib2.0-0 libxext6 libsm6 libxrender1 libffi-dev \
+    git \
+    libusb-1.0-0-dev
+
+RUN apt update && apt install -y python3-pip
+RUN pip3 install --upgrade pip
+
+RUN pip3 install empy matplotlib jupyter shapely rospy-message-converter
+
+# Text to speech - TTS
+RUN pip3 install TTS
+
+# Speech to text - Mozilla DeepSpeech
+RUN pip3 install deepspeech-gpu
+RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.pbmm
+RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.scorer
+
+RUN apt install -y portaudio19-dev
+RUN pip3 install pyaudio webrtcvad halo
+
+
+################################################################
+## END: python3
+## BEGIN: ros:noetic
+################################################################
+
+# install ros packages
+#RUN apt update && apt install --no-install-recommends -y \
+#    ros-noetic-ros-core=1.5.0-1* \
+#    ros-noetic-ros-base=1.5.0-1* \
+#    python3-rosdep \
+#    python3-rosinstall \
+#    python3-vcstools \
+#    python3-catkin-tools \
+#    nano \
+#    && rm -rf /var/lib/apt/lists/*
+
+# bootstrap rosdep
+#RUN rosdep init && \
+#  rosdep update --rosdistro $ROS_DISTRO
+
+################################################################
+## END: ros:noetic
+## BEGIN: python packages
+################################################################
+
+RUN pip3 install rich matplotlib numpy pillow scikit-learn scipy tensorboard pyyaml regex natsort  commentjson cython scikit-image joblib==1.1.0 jsonpickle
+RUN pip3 install lap cython_bbox
+
+
+# Create local catkin workspace
+ENV CATKIN_WS=/root/catkin_ws
+ENV ROS_PYTHON_VERSION=3
+RUN mkdir -p $CATKIN_WS/src/
+#RUN mkdir -p $CATKIN_WS/src/nn_pipeline
+#WORKDIR $CATKIN_WS
+
+#COPY nn_pipeline $CATKIN_WS/src/nn_pipeline
+
+## Initialize local catkin workspace
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#    && cd $CATKIN_WS \
+#    && rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO}
+
+# RUN update-alternatives --remove python /usr/bin/python \
+#     && update-alternatives --install /usr/bin/python python /usr/local/bin/python3 10
+
+# RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+
+################################################################
+## END: ROS
+## BEGIN: ROS (again?)
+################################################################
+
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#    && cd $CATKIN_WS \
+#    && catkin init \
+#    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 \
+#    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/#include/python3.8 -DPYTHON_LIBRARY=/usr/local/lib/libpython3.8.a \
+#    && catkin config --install
+#    # && cd src \
+
+
+
+
+
+# RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#     && cd $CATKIN_WS \
+#     && catkin build cv_bridge -DSETUPTOOLS_DEB_LAYOUT=OFF \ 
+#     # I was getting some error without -DSETUPTOOLS_DEB_LAYOUT=OFF
+#     && source install/setup.bash --extend
+
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#    && catkin build
+#    # && catkin install
+#    # catkin install doesn't seem to do anything?
+
+# ROS breaks opencv because python3 will try and default to the python2.7 version of opencv. Delete it.
+# RUN rm /opt/ros/kinetic/lib/python2.7/dist-packages/cv2.so
+
+################################################################
+## END: ROS (again?)
+################################################################
+
+
+# Always source ros_catkin_entrypoint.sh when launching bash (e.g. when attaching to container)
+#RUN echo "source /entrypoint.sh" >> /root/.bashrc
+
+COPY ./entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
+COPY ./run-jupyter /bin/run-jupyter
+RUN chmod +x /bin/run-jupyter
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# # stop docker from exiting immediately
+CMD tail -f /dev/null
