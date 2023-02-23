@@ -2,11 +2,11 @@ version: '3.3'
 
 services:
   allnet_deepspeech:
-    container_name: deepspeech-container
+    container_name: allnet_clip
     # docker-compose build --build-arg 'TARGET=gpu'
     # or:
     # docker-compose build --build-arg 'TARGET=cpu'
-    image: allnet_deepspeech:devel
+    image: allnet_clip:devel
     environment:
       - DISPLAY=$DISPLAY
       # 
@@ -14,7 +14,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
-      - $HOME/boriscycle/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
+      - $HOME/Desktop/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
       - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
     command: tail -f /dev/null
     privileged: true

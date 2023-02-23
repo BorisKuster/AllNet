@@ -1,8 +1,6 @@
-
 # use ubuntu 20.04 because we want to use ROS noetic
 ARG TARGET="gpu"
-#FROM nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04 as gpu
-FROM nvidia/cuda:10.1-devel-ubuntu18.04 as gpu
+FROM nvidia/cuda:11.3.1-devel-ubuntu20.04
 
 # FROM ros:noetic
 LABEL maintainer "Boris Kuster <boris.kuster@ijs.si>"
@@ -29,10 +27,10 @@ RUN apt update && apt install -q -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # setup keys
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 
 # setup sources.list
-RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros1-latest.list
+#RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros1-latest.list
 
 # setup environment
 ENV LANG C.UTF-8
@@ -58,22 +56,13 @@ RUN apt update --fix-missing && apt install -y wget bzip2 ca-certificates zlib1g
 RUN apt update && apt install -y python3-pip
 RUN pip3 install --upgrade pip
 
-RUN pip3 install empy matplotlib jupyter numpy-quaternion quaternionic shapely rospy-message-converter
+RUN pip3 install empy matplotlib jupyter numpy-quaternion quaternionic shapely nano
 
-RUN pip3 install transformers
 
-# Text to speech - TTS
-RUN pip3 install TTS
 
-# Speech to text - Mozilla DeepSpeech
-RUN pip3 install deepspeech-gpu
-RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.pbmm
-RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.scorer
-
-RUN apt install -y portaudio19-dev
-RUN pip3 install pyaudio webrtcvad halo
 
 # Image to text - OpenAI CLIP
+RUN pip3 install open_clip_torch
 
 # Text input to text output and code generation - GPT-like model (GPT-Neo)
 
@@ -83,23 +72,23 @@ RUN pip3 install pyaudio webrtcvad halo
 ################################################################
 
 # install ros packages
-RUN apt update && apt install --no-install-recommends -y \
-    ros-noetic-ros-core=1.5.0-1* \
-    ros-noetic-ros-base=1.5.0-1* \
-    python3-rosdep \
-    python3-rosinstall \
-    python3-vcstools \
-    python3-catkin-tools \
-
-    ros-noetic-tf \
-    vim \
-    && rm -rf /var/lib/apt/lists/*
+#RUN apt update && apt install --no-install-recommends -y \
+#    ros-noetic-ros-core=1.5.0-1* \
+#    ros-noetic-ros-base=1.5.0-1* \
+#    rospy-message-converter \
+#    python3-rosdep \
+#    python3-rosinstall \
+#    python3-vcstools \
+#    python3-catkin-tools \
+#    ros-noetic-tf \
+#    ros-noetic-cv-bridge \
+#    && rm -rf /var/lib/apt/lists/*
     
-#ros-noetic-cv-bridge \
+
 
 # bootstrap rosdep
-RUN rosdep init && \
-  rosdep update --rosdistro $ROS_DISTRO
+#RUN rosdep init && \
+#  rosdep update --rosdistro $ROS_DISTRO
 
 ################################################################
 ## END: ros:noetic
@@ -116,20 +105,8 @@ RUN pip3 install torch torchvision --extra-index-url https://download.pytorch.or
 
 # RUN pip3 install torch torchvision
 
-RUN pip3 install rich matplotlib numpy pillow scikit-learn scipy tensorboard pyyaml opencv-python regex natsort shapely commentjson pycocotools cython scikit-image pyrealsense2 hdbscan joblib==1.1.0 jsonpickle
+RUN pip3 install rich matplotlib numpy pillow scikit-learn scipy tensorboard pyyaml opencv-python regex natsort shapely commentjson pycocotools cython scikit-image joblib==1.1.0 jsonpickle
 RUN pip3 install lap cython_bbox
-
-################################################################
-## END: python packages
-## BEGIN: pypylon
-################################################################
-
-RUN pip3 install pypylon
-
-################################################################
-## END: pypylon
-## BEGIN: ROS
-################################################################
 
 # Create local catkin workspace
 ENV CATKIN_WS=/root/catkin_ws
@@ -140,9 +117,9 @@ WORKDIR $CATKIN_WS
 COPY nn_pipeline $CATKIN_WS/src/nn_pipeline
 
 # Initialize local catkin workspace
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
-    && cd $CATKIN_WS \
-    && rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO}
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#    && cd $CATKIN_WS \
+#    && rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO}
 
 # RUN update-alternatives --remove python /usr/bin/python \
 #     && update-alternatives --install /usr/bin/python python /usr/local/bin/python3 10
@@ -150,8 +127,8 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 
 # required for pyrealsense2
-RUN pip3 install rospkg
-RUN pip3 install rospy-message-converter
+#RUN pip3 install rospkg
+#RUN pip3 install rospy-message-converter
 
 ################################################################
 ## END: ROS
@@ -167,12 +144,12 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A0
 ## BEGIN: ROS (again?)
 ################################################################
 
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
-    && cd $CATKIN_WS \
-    && catkin init \
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#    && cd $CATKIN_WS \
+#    && catkin init \
     # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 \
     # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/include/python3.8 -DPYTHON_LIBRARY=/usr/local/lib/libpython3.8.a \
-    && catkin config --install
+#    && catkin config --install
     # && cd src \
     # && git clone -b noetic https://github.com/ros-perception/vision_opencv.git
 
@@ -187,10 +164,10 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 #     # I was getting some error without -DSETUPTOOLS_DEB_LAYOUT=OFF
 #     && source install/setup.bash --extend
 
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
-    && catkin build
-    # && catkin install
-    # catkin install doesn't seem to do anything?
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#    && catkin build
+#    # && catkin install
+#    # catkin install doesn't seem to do anything?
 
 # ROS breaks opencv because python3 will try and default to the python2.7 version of opencv. Delete it.
 # RUN rm /opt/ros/kinetic/lib/python2.7/dist-packages/cv2.so

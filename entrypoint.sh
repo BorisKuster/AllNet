@@ -42,4 +42,5 @@ if [ -d "$DIR_NN_PIPELINE" ]; then
     cd $DIR_NN_PIPELINE
 fi
 
+
 exec "$@"
