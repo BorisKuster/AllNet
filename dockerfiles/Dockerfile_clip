@@ -1,7 +1,11 @@
 # use ubuntu 20.04 because we want to use ROS noetic
 ARG TARGET="gpu"
-FROM nvidia/cuda:11.3.1-devel-ubuntu20.04
 
+ARG nvidia_binary_version="470.161.03"
+ARG CUDA_VERSION="11.3.1"
+
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04
+#FROM nvidia_driver:11.3.1-base-ubuntu20.04
 # FROM ros:noetic
 LABEL maintainer "Boris Kuster <boris.kuster@ijs.si>"
 
@@ -45,7 +49,9 @@ ENV ROS_DISTRO noetic
 
 RUN apt update && apt install --no-install-recommends -y \
     software-properties-common \
-    build-essential
+    build-essential \
+    wget
+    
 RUN add-apt-repository universe
 
 RUN apt update --fix-missing && apt install -y wget bzip2 ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev \
@@ -101,7 +107,18 @@ RUN pip3 install open_clip_torch
 #        pip3 install torch torchvision \
 #     fi
 
-RUN pip3 install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu113
+RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+
+# Install nvidia driver 
+#### INstall the specific nvidia driver version
+#ARG nvidia_binary="NVIDIA-Linux-x86_64-${nvidia_binary_version}.run"
+#RUN wget -q https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_binary}
+#RUN chmod +x ${nvidia_binary} &&
+#RUN ./${nvidia_binary} --accept-license --ui=none --no-kernel-module --no-questions>
+#RUN rm -rf ${nvidia_binary}
+
+
+#RUN pip3 install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu113
 
 # RUN pip3 install torch torchvision
 

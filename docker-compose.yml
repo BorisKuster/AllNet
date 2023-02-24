@@ -1,12 +1,32 @@
 version: '3.3'
 
 services:
-  allnet_deepspeech:
-    container_name: allnet_clip
+  #allnet_clip:
+  #  container_name: allnet_clip_container
+  #  # docker-compose build --build-arg 'TARGET=gpu'
+  #  # or:
+  #  # docker-compose build --build-arg 'TARGET=cpu'
+  #  image: allnet_clip:devel
+  #  environment:
+  #    - DISPLAY=$DISPLAY
+  #    # 
+  #    # If the computer has CUDA support:
+  #    - NVIDIA_VISIBLE_DEVICES=0
+  #    - NVIDIA_DRIVER_CAPABILITIES=all
+  #  volumes:
+  #    - $HOME/boriscycle/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
+  #    - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
+  #  command: tail -f /dev/null
+  #  privileged: true
+  #  network_mode: "host"
+  #  restart: "unless-stopped"
+  
+  allnet_whisper:
+    container_name: allnet_whisper_container
     # docker-compose build --build-arg 'TARGET=gpu'
     # or:
     # docker-compose build --build-arg 'TARGET=cpu'
-    image: allnet_clip:devel
+    image: allnet_whisper:devel
     environment:
       - DISPLAY=$DISPLAY
       # 
@@ -14,7 +34,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
-      - $HOME/Desktop/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
+      - $HOME/boriscycle/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
       - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
     command: tail -f /dev/null
     privileged: true

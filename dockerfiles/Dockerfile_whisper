@@ -1,9 +1,11 @@
-
 # use ubuntu 20.04 because we want to use ROS noetic
 ARG TARGET="gpu"
-#FROM nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04 as gpu
-FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu20.04 as gpu
 
+ARG nvidia_binary_version="470.161.03"
+ARG CUDA_VERSION="11.3.1"
+
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04
+#FROM nvidia_driver:11.3.1-base-ubuntu20.04
 # FROM ros:noetic
 LABEL maintainer "Boris Kuster <boris.kuster@ijs.si>"
 
@@ -26,22 +28,21 @@ RUN apt update && apt install -q -y --no-install-recommends \
     gnupg2 \
     curl \
     nano \
+    alsa-base \
+    alsa-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # setup keys
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+#RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 
 # setup sources.list
-RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros1-latest.list
+#RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros1-latest.list
 
 # setup environment
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
 ENV ROS_DISTRO noetic
-
-
-ENV LD_LIBRARY_PATH=/usr/local/cuda-10.1/compat/:$LD_LIBRARY_PATH
 
 ################################################################
 ## END: ros:core
@@ -50,29 +51,31 @@ ENV LD_LIBRARY_PATH=/usr/local/cuda-10.1/compat/:$LD_LIBRARY_PATH
 
 RUN apt update && apt install --no-install-recommends -y \
     software-properties-common \
-    build-essential
+    build-essential \
+    wget
+    
 RUN add-apt-repository universe
 
 RUN apt update --fix-missing && apt install -y wget bzip2 ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev \
     libglib2.0-0 libxext6 libsm6 libxrender1 libffi-dev \
     git \
+    ffmpeg \
     libusb-1.0-0-dev
 
 RUN apt update && apt install -y python3-pip
 RUN pip3 install --upgrade pip
 
-RUN pip3 install empy matplotlib jupyter shapely rospy-message-converter
-
-# Text to speech - TTS
-RUN pip3 install TTS
-
-# Speech to text - Mozilla DeepSpeech
-RUN pip3 install deepspeech-gpu
-RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.pbmm
-RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.scorer
+RUN pip3 install empy matplotlib jupyter numpy-quaternion quaternionic shapely nano
 
 RUN apt install -y portaudio19-dev
-RUN pip3 install pyaudio webrtcvad halo
+RUN pip3 install pyaudio webrtcvad halo ffmpeg-python
+
+# OpenAI whisper
+RUN pip3 install -U openai-whisper
+
+# Text to speech TTS
+RUN pip3 install TTS
+
 
 
 ################################################################
@@ -84,12 +87,16 @@ RUN pip3 install pyaudio webrtcvad halo
 #RUN apt update && apt install --no-install-recommends -y \
 #    ros-noetic-ros-core=1.5.0-1* \
 #    ros-noetic-ros-base=1.5.0-1* \
+#    rospy-message-converter \
 #    python3-rosdep \
 #    python3-rosinstall \
 #    python3-vcstools \
 #    python3-catkin-tools \
-#    nano \
+#    ros-noetic-tf \
+#    ros-noetic-cv-bridge \
 #    && rm -rf /var/lib/apt/lists/*
+    
+
 
 # bootstrap rosdep
 #RUN rosdep init && \
@@ -100,20 +107,39 @@ RUN pip3 install pyaudio webrtcvad halo
 ## BEGIN: python packages
 ################################################################
 
-RUN pip3 install rich matplotlib numpy pillow scikit-learn scipy tensorboard pyyaml regex natsort  commentjson cython scikit-image joblib==1.1.0 jsonpickle
-RUN pip3 install lap cython_bbox
+# RUN if [ "$TARGET" = "gpu" ] ; then \
+#        pip3 install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu113  \
+#     else \
+#        pip3 install torch torchvision \
+#     fi
 
+RUN pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+
+# Install nvidia driver 
+#### INstall the specific nvidia driver version
+#ARG nvidia_binary="NVIDIA-Linux-x86_64-${nvidia_binary_version}.run"
+#RUN wget -q https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_binary}
+#RUN chmod +x ${nvidia_binary} &&
+#RUN ./${nvidia_binary} --accept-license --ui=none --no-kernel-module --no-questions>
+#RUN rm -rf ${nvidia_binary}
+
+
+#RUN pip3 install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu113
+
+# RUN pip3 install torch torchvision
+
+RUN pip3 install rich matplotlib numpy pillow scikit-learn scipy tensorboard pyyaml opencv-python regex natsort shapely commentjson pycocotools cython scikit-image joblib==1.1.0 jsonpickle
+RUN pip3 install lap cython_bbox
 
 # Create local catkin workspace
 ENV CATKIN_WS=/root/catkin_ws
 ENV ROS_PYTHON_VERSION=3
-RUN mkdir -p $CATKIN_WS/src/
-#RUN mkdir -p $CATKIN_WS/src/nn_pipeline
-#WORKDIR $CATKIN_WS
+RUN mkdir -p $CATKIN_WS/src/nn_pipeline
+WORKDIR $CATKIN_WS
 
-#COPY nn_pipeline $CATKIN_WS/src/nn_pipeline
+COPY nn_pipeline $CATKIN_WS/src/nn_pipeline
 
-## Initialize local catkin workspace
+# Initialize local catkin workspace
 #RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 #    && cd $CATKIN_WS \
 #    && rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO}
@@ -121,22 +147,37 @@ RUN mkdir -p $CATKIN_WS/src/
 # RUN update-alternatives --remove python /usr/bin/python \
 #     && update-alternatives --install /usr/bin/python python /usr/local/bin/python3 10
 
-# RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+
+# required for pyrealsense2
+#RUN pip3 install rospkg
+#RUN pip3 install rospy-message-converter
 
 ################################################################
 ## END: ROS
+## BEGIN: realsense
+################################################################
+
+RUN apt install -y apt-transport-https
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE \
+    && add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
+
+################################################################
+## END: realsense
 ## BEGIN: ROS (again?)
 ################################################################
 
 #RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 #    && cd $CATKIN_WS \
 #    && catkin init \
-#    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 \
-#    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/#include/python3.8 -DPYTHON_LIBRARY=/usr/local/lib/libpython3.8.a \
+    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 \
+    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/include/python3.8 -DPYTHON_LIBRARY=/usr/local/lib/libpython3.8.a \
 #    && catkin config --install
-#    # && cd src \
+    # && cd src \
+    # && git clone -b noetic https://github.com/ros-perception/vision_opencv.git
 
-
+# cv_bridge fix
+# RUN sed -i 's/python3/python-py38/g' src/vision_opencv/cv_bridge/CMakeLists.txt
 
 
 
@@ -160,7 +201,7 @@ RUN mkdir -p $CATKIN_WS/src/
 
 
 # Always source ros_catkin_entrypoint.sh when launching bash (e.g. when attaching to container)
-#RUN echo "source /entrypoint.sh" >> /root/.bashrc
+RUN echo "source /entrypoint.sh" >> /root/.bashrc
 
 COPY ./entrypoint.sh /
 RUN chmod +x /entrypoint.sh
