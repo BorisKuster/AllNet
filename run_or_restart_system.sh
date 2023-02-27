@@ -48,6 +48,6 @@ sleep 3
 #############################################
 if [ ! $COMMAND = "stop" ]
 then
-    konsole --noclose -e "docker exec -it allnet_whisper_container /bin/run-jupyter"
+    konsole --noclose -e "docker exec -it allnet_container /bin/run-jupyter"
 fi
 

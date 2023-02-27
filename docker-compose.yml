@@ -22,11 +22,11 @@ services:
   #  restart: "unless-stopped"
   
   allnet_whisper:
-    container_name: allnet_whisper_container
+    container_name: allnet_container
     # docker-compose build --build-arg 'TARGET=gpu'
     # or:
     # docker-compose build --build-arg 'TARGET=cpu'
-    image: allnet_whisper:devel
+    image: allnet:devel
     environment:
       - DISPLAY=$DISPLAY
       # 
