@@ -34,7 +34,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
-      - $HOME/boriscycle/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
+      - ./nn_pipeline:/root/catkin_ws/src/nn_pipeline
       - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
     command: tail -f /dev/null
     privileged: true

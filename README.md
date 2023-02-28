@@ -1,6 +1,25 @@
 # AllNet
 A pipeline composed of several neural network modules to handle inputs such as audio(speech), text and images/videos, and with capability to output vectors, text, or images (and videos?).
 
+# Pre-installation config
+In the dockerfile "dockerfiles/Dockerfile_allnet", change the line "nvidia_driver_major_version" to the major version (first 3 numbers) of your nvidia driver (470, 525 etc.).
+By default, the package expects to reside in "/home/$USER/allnet". If not there, you must also change the volume location in "docker-compose.yml"
+
+# Installation
+Install docker engine as per 
+https://docs.docker.com/desktop/install/linux-install/
+
+Install docker compose (for ubuntu "sudo apt install docker-compose")
+
+Install nvidia-runtime-container as per
+https://github.com/NVIDIA/nvidia-container-runtime
+Also do what is described in the Docker Engine setup section !
+
+Run the build commands shown in "dockerfiles/build_commands"
+
+# To run
+In bash, run "./run_or_restart_system.sh"
+
 # Some sample commands:
 
 # Visual + text - openCLIP
