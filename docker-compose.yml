@@ -1,42 +1,46 @@
 version: '3.3'
 
 services:
-  #allnet_clip:
-  #  container_name: allnet_clip_container
-  #  # docker-compose build --build-arg 'TARGET=gpu'
-  #  # or:
-  #  # docker-compose build --build-arg 'TARGET=cpu'
-  #  image: allnet_clip:devel
-  #  environment:
-  #    - DISPLAY=$DISPLAY
-  #    # 
-  #    # If the computer has CUDA support:
-  #    - NVIDIA_VISIBLE_DEVICES=0
-  #    - NVIDIA_DRIVER_CAPABILITIES=all
-  #  volumes:
-  #    - $HOME/boriscycle/AllNet/nn_pipeline:/catkin_ws/src/nn_pipeline
-  #    - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
-  #  command: tail -f /dev/null
-  #  privileged: true
-  #  network_mode: "host"
-  #  restart: "unless-stopped"
-  
-  allnet_whisper:
-    container_name: allnet_container
+  allnet_S2T:
+    container_name: allnet_S2T_container
     # docker-compose build --build-arg 'TARGET=gpu'
     # or:
     # docker-compose build --build-arg 'TARGET=cpu'
     image: allnet:devel
     environment:
       - DISPLAY=$DISPLAY
-      # 
+      - ROS_MASTER_URI=http://10.20.0.1:11311
+      - ROS_IP=10.20.0.2 
       # If the computer has CUDA support:
       - NVIDIA_VISIBLE_DEVICES=0
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
       - ./nn_pipeline:/root/catkin_ws/src/nn_pipeline
       - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
-    command: tail -f /dev/null
+    #command: tail -f /dev/null
+    command: python speech_to_text_node.py
+    privileged: true
+    network_mode: "host"
+    restart: "unless-stopped"
+
+  allnet_LLM:
+    container_name: allnet_LLM_container
+    # docker-compose build --build-arg 'TARGET=gpu'
+    # or:
+    # docker-compose build --build-arg 'TARGET=cpu'
+    image: allnet:devel
+    environment:
+      - DISPLAY=$DISPLAY
+      - ROS_MASTER_URI=http://10.20.0.1:11311
+      - ROS_IP=10.20.0.2 
+      # If the computer has CUDA support:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - ./nn_pipeline:/root/catkin_ws/src/nn_pipeline
+      - "/tmp/.X11-unix:/tmp/.X11-unix" # for using local xserver
+    #command: tail -f /dev/null
+    command: python llm_node.py
     privileged: true
     network_mode: "host"
     restart: "unless-stopped"

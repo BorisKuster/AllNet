@@ -2,7 +2,7 @@
 
 # Source ROS distro environment and local catwin workspace
 #source "/opt/ros/$ROS_DISTRO/setup.bash" && source "$CATKIN_WS/devel/setup.bash" && source "$CATKIN_WS/install/setup.bash"
-
+source "/opt/ros/$ROS_DISTRO/setup.bash"
 # ROS screws up the PYTHONPATH by also adding python2 path.
 # I tried doing this, but it breaks ROS as well :(
 # unset PYTHONPATH
@@ -41,6 +41,5 @@ if [ -d "$DIR_NN_PIPELINE" ]; then
     export PATH=$PATH:$DIR_NN_PIPELINE
     cd $DIR_NN_PIPELINE
 fi
-
 
 exec "$@"

@@ -64,8 +64,9 @@ def pyaudio_get_input_mic_device(searching_for = "Logitech"):
             info = aud.get_device_info_by_index(i)
             #print(info['name'])
             if searching_for in info['name']:
-                print(info)
-                good_device_info = info
+                if info['maxInputChannels'] > 0:
+                    print(info)
+                    good_device_info = info
         except Exception as e :
             print("Exception:", e)
             
@@ -280,8 +281,8 @@ class VADAudio(Audio):
 
 class SpeechToTextHandler:
     def __init__(self, nospinner = True, model=None, savewav = False, vad_aggressiveness=3, device = 7,
-                 rate = 48000,file = 'out.wav'):
-        
+                 rate = 48000,file = 'out.wav', audio_input_callback = None):
+        self.audio_input_callback = audio_input_callback
         if model is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             print(self.device)
@@ -332,6 +333,8 @@ class SpeechToTextHandler:
                         #print(self.all_frames.shape)
                         text = whisper_to_text(whisper_model = self.model, audiofile = None,
                                                steamed_frame = self.all_frames)
+                        if self.audio_input_callback is not None:
+                            self.audio_input_callback(text)
                         #print("Recognized: %s" % text)
                         #stream_context = model.createStream()
                         #print("END utterance, ", type(all_frames[0]))
