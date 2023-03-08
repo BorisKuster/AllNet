@@ -1,28 +1,30 @@
 #from transformers import AutoTokenizer, GPTJForCausalLM
-from audio_utils import pyaudio_get_input_mic_device, whisper_to_text, SpeechToTextHandler 
+from audio_utils import pyaudio_get_device
 import whisper
 import torch
 import time
 import rospy
 from std_msgs.msg import String, Float32, Int16
 from std_srvs.srv import Trigger
-
+from tts_utils import TextToSpeech
 
 class Ros_TTS_talker:
     def __init__(self):
         rospy.init_node("TTS_node", anonymous = True)
         #model = whisper.load_model("base")
-        in_device_info = pyaudio_get_input_mic_device(searching_for ="Logitech")
-        #device_index = in_device_info['index']
-        device_index = 8
-        #return 0
-        #self.s2t = SpeechToTextHandler(model = model, device = device_index,
-        #                               audio_input_callback = self.handle_s2t_output)
+        out_device_info = pyaudio_get_device(type = 'output', searching_for ="Logitech")
+        #device_index = out_device_info['index']
+        #print(device_index)
+        self.tts_object = TextToSpeech(device_info = out_device_info)
 
-        #self.publisher = rospy.Publisher("TTS_output", String, queue_size = 5)
-
+        self.subscriber = rospy.Subscriber("TTS_input", String, self.handle_tts_output)
+        try:
+            rospy.spin()
+        except KeyboardInterrupt:
+            return 0
     def handle_tts_output(self, text):
-        out_msg = text.data 
+        out_msg = text.data
+        self.tts_object.text_to_speech(out_msg) 
         return out_msg
 
 if __name__=="__main__":

@@ -1,5 +1,5 @@
 #from transformers import AutoTokenizer, GPTJForCausalLM
-from audio_utils import pyaudio_get_input_mic_device, whisper_to_text, SpeechToTextHandler 
+from audio_utils import pyaudio_get_device, whisper_to_text, SpeechToTextHandler 
 import whisper
 import torch
 import time
@@ -12,7 +12,7 @@ class Ros_S2T_talker:
     def __init__(self):
         rospy.init_node("S2T_node", anonymous = True)
         model = whisper.load_model("base")
-        in_device_info = pyaudio_get_input_mic_device(searching_for ="Logitech")
+        in_device_info = pyaudio_get_device(type = 'input', searching_for ="Logitech")
         #device_index = in_device_info['index']
         device_index = 8
         #return 0

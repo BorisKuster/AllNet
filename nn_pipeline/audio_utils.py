@@ -52,7 +52,8 @@ def play_audiofile(audiofile=None, output_device_index = 0):
     stream.close()    
     p.terminate()
 
-def pyaudio_get_input_mic_device(searching_for = "Logitech"):
+def pyaudio_get_device(type = 'input', searching_for = "Logitech"):
+    assert type in ['input', 'output']
     # Input params
     # Searching for - partial name of device which should be used. UPPER AND LOWER CASE MATTERS ! 
 
@@ -64,7 +65,10 @@ def pyaudio_get_input_mic_device(searching_for = "Logitech"):
             info = aud.get_device_info_by_index(i)
             #print(info['name'])
             if searching_for in info['name']:
-                if info['maxInputChannels'] > 0:
+                if (type=='input') and (info['maxInputChannels'] > 0):
+                    print(info)
+                    good_device_info = info
+                elif (type=='output') and (info['maxOutputChannels'] > 0):
                     print(info)
                     good_device_info = info
         except Exception as e :
@@ -76,7 +80,7 @@ def pyaudio_get_input_mic_device(searching_for = "Logitech"):
     else:
         return good_device_info
 
-def record_clip(DEVICE_INDEX = 10, FORMAT = pyaudio.paInt16, RATE=48000, CHUNK=1024, RECORD_SECONDS=6,
+def record_clip(DEVICE_INDEX = 10, FORMAT = pyaudio.paInt16, RATE=48000, CHUNK=1024, RECORD_SECONDS=6, CHANNELS = None,
                 WAVE_OUTPUT_FILENAME = 'filename.wav'):
 
     audio = pyaudio.PyAudio()
