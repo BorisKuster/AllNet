@@ -94,6 +94,9 @@ RUN pip3 install -U openai-whisper
 # Text to speech TTS
 RUN pip3 install TTS
 
+# Install huggingface transformers from github
+RUN pip3 install git+https://github.com/huggingface/transformers
+RUN pip3 install accelerate bitsandbytes
 ################################################################
 ## END: Audio model (openai-whisper)
 ## BEGIN: ros:noetic
@@ -173,33 +176,37 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A0
 ## END: realsense
 ## BEGIN: ROS (again?)
 ################################################################
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt update
+RUN apt install -y ros-noetic-ros-base \
+                   python3-rospy \
+                   python3-catkin-tools \
+                   python3-osrf-pycommon
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash
 
+RUN apt install -y ros-${ROS_DISTRO}-cv-bridge ros-${ROS_DISTRO}-vision-opencv
 #RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 #    && cd $CATKIN_WS \
 #    && catkin init \
-    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 \
-    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/include/python3.8 -DPYTHON_LIBRARY=/usr/local/lib/libpython3.8.a \
+#    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3.8 \
+#    # && catkin config -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/local/include/python3.8 -DPYTHON_LIBRARY=/usr/local/lib/libpython3.8.a \
 #    && catkin config --install
-    # && cd src \
-    # && git clone -b noetic https://github.com/ros-perception/vision_opencv.git
+#    # && cd src \
+#    # && git clone -b noetic https://github.com/ros-perception/vision_opencv.git
 
 # cv_bridge fix
-# RUN sed -i 's/python3/python-py38/g' src/vision_opencv/cv_bridge/CMakeLists.txt
+#RUN sed -i 's/python3/python-py38/g' src/vision_opencv/cv_bridge/CMakeLists.txt
 
 
 
-# RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+#RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 #     && cd $CATKIN_WS \
 #     && catkin build cv_bridge -DSETUPTOOLS_DEB_LAYOUT=OFF \ 
 #     # I was getting some error without -DSETUPTOOLS_DEB_LAYOUT=OFF
 #     && source install/setup.bash --extend
 
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN apt update
-RUN apt install -y ros-noetic-ros-base \
-                   python3-rospy
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash
+
 #    && catkin build
 #    # && catkin install
 #    # catkin install doesn't seem to do anything?
