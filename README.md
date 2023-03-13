@@ -1,4 +1,10 @@
 # AllNet
+
+Old repo. New code available at:
+https://repo.ijs.si/bkuster/allnet
+
+
+
 A pipeline composed of several neural network modules to handle inputs such as audio(speech), text and images/videos, and with capability to output vectors, text, or images (and videos?).
 
 # Pre-installation config
